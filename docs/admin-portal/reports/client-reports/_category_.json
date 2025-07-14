@@ -1,8 +1,0 @@
-{
-  "label": "Client Reports",
-  "position": 4,
-  "link": {
-    "type": "generated-index",
-    "description": "Collection of reports for monitoring client information, generating client lists, and analyzing client-related data."
-  }
-} 
