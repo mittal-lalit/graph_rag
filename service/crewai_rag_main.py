@@ -7,6 +7,8 @@ import os
 from dotenv import load_dotenv
 from sentence_transformers import SentenceTransformer
 
+from config import settings
+
 # =========================
 # Load environment
 # =========================
@@ -35,17 +37,21 @@ class TextProcessor:
 # 3. Knowledge Graph from Neo4j
 # =========================
 class KnowledgeGraph:
-    def __init__(self):
-        self.driver = GraphDatabase.driver("bolt://localhost:7687", auth=("neo4j", "lalit2927"))
+    def __init__(self, uri, username, password):
+        self.driver = GraphDatabase.driver(uri, auth=(username, password))
+
+    def close(self):
+        self.driver.close()
 
     def run_query(self, name: str, params: Dict[str, Any]) -> List[Dict[str, Any]]:
         with self.driver.session(database="neo4j") as session:
             if name == "similarity_query":
                 embedding = params["embedding"]
                 top_k = params["top_k"]
+                # Neo4j 5+ syntax: use IS NOT NULL instead of exists()
                 query = """
-                MATCH (n:Node)
-                WHERE exists(n.embedding)
+                MATCH (n)
+                WHERE n.embedding IS NOT NULL AND size(n.embedding) = size($embedding)
                 WITH n, gds.similarity.cosine(n.embedding, $embedding) AS score
                 RETURN n.path AS path, score
                 ORDER BY score DESC LIMIT $top_k
@@ -118,7 +124,11 @@ class RAGBackend:
                     neighbor_node = self.knowledge_graph.get_node_by_path(neighbor_path)
                     if neighbor_node:
                         context_text += f"\n[{neighbor_node['name']}]\n{neighbor_node.get('content', '')}\n"
+        
 
+        print("\n--- CONTEXT SENT TO LLM ---")
+        print(context_text)
+        print("--- END CONTEXT ---\n")
         prompt = f"""You must answer ONLY in English.
 Context:
 {context_text}
@@ -140,10 +150,14 @@ class ChatWithGraphTool(BaseTool):
         answer = rag_backend.chat_interface(query)
         return json.dumps({"answer": answer}, indent=2)
 
-# Instantiate tool
+# Instantiate tool — credentials now come from config/settings.py, not hardcoded
 rag_backend = RAGBackend(
     text_processor=TextProcessor(),
-    knowledge_graph=KnowledgeGraph(),
+    knowledge_graph=KnowledgeGraph(
+        uri=settings.NEO4J_URI,
+        username=settings.NEO4J_USERNAME,
+        password=settings.NEO4J_PASSWORD,
+    ),
     top_k=5,
     neighbors_k=3
 )
@@ -152,21 +166,21 @@ chat_tool = ChatWithGraphTool()
 # =========================
 # 6. Agent + Task
 # =========================
-SYSTEM_PROMPT = """
-You are a helpful assistant. You must ALWAYS answer in English.
-To answer the user, ALWAYS call the 'chat_with_graph' tool with the exact user query.
-Return the tool's answer as your final answer (do not invent extra info).
-"""
-
+# NOTE: newer crewai versions don't accept system_prompt as an Agent kwarg.
+# Fold that instruction into backstory instead.
 agent = Agent(
     role="Graph RAG Agent",
     goal="Answer user questions using the knowledge graph RAG pipeline.",
-    backstory="You only answer using the database via the chat_with_graph tool.",
+    backstory=(
+        "You are a helpful assistant. You must ALWAYS answer in English. "
+        "You only answer using the database via the chat_with_graph tool. "
+        "To answer the user, ALWAYS call the 'chat_with_graph' tool with the exact user query. "
+        "Return the tool's answer as your final answer (do not invent extra info)."
+    ),
     llm=groq_LLM,
     tools=[chat_tool],
     verbose=False,
     allow_delegation=False,
-    system_prompt=SYSTEM_PROMPT
 )
 
 task = Task(
@@ -178,7 +192,15 @@ task = Task(
 crew = Crew(agents=[agent], tasks=[task], verbose=False)
 
 # =========================
-# 7. Interactive CLI
+# 7. Callable entry point for UI / other modules
+# =========================
+def ask_crewai(user_query: str) -> str:
+    """Run the CrewAI agent pipeline for a single question and return the answer text."""
+    result = crew.kickoff(inputs={"user_query": user_query})
+    return str(result)
+
+# =========================
+# 8. Interactive CLI
 # =========================
 if __name__ == "__main__":
     while True:

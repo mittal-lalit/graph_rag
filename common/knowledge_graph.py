@@ -55,7 +55,7 @@ class KnowledgeGraph:
         with self.driver.session() as session:
             session.run(self.queries["clear_graph"])
             for node in self.json_nodes.values():
-                session.write_transaction(self.create_node, node)
+                session.execute_write(lambda tx: self.create_node(tx, node))
             for parent_node in self.json_nodes.values():
                 for child_id in parent_node.get('children', []):
                     # Find child node object by matching 'file_id'
@@ -64,12 +64,14 @@ class KnowledgeGraph:
                         None
                     )
                     if child_node:
-                        session.write_transaction(
-                            self.create_relationship,
-                            parent_key="name",
-                            parent_value=parent_node["name"],
-                            child_key="name",
-                            child_value=child_node["name"]
+                        session.execute_write(
+                            lambda tx: self.create_relationship(
+                                tx,
+                                parent_key="name",
+                                parent_value=parent_node["name"],
+                                child_key="name",
+                                child_value=child_node["name"]
+                            )
                         )
 
     def get_all_document_nodes(self):

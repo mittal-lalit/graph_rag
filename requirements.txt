@@ -14,7 +14,7 @@ en_core_web_md @ https://github.com/explosion/spacy-models/releases/download/en_
 en_core_web_sm @ https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.8.0/en_core_web_sm-3.8.0-py3-none-any.whl#sha256=1932429db727d4bff3deed6b34cfc05df17794f4a52eeb26cf8928f7c1a0fb85
 filelock
 fsspec
-huggingface-hub
+huggingface-hub>=1.20.1
 idna
 Jinja2
 joblib
@@ -57,7 +57,7 @@ srsly
 sympy
 thinc
 threadpoolctl
-tokenizers
+tokenizers>=0.22.0
 torch
 tqdm
 transformers
@@ -68,3 +68,17 @@ urllib3
 wasabi
 weasel
 wrapt
+
+# --- Added during the project restart, required to actually run the app ---
+
+# Streamlit UI
+streamlit
+pyvis
+
+# CrewAI + Groq agentic backend
+# Pinned to avoid the cache_breakpoint bug in crewai>=1.x with non-Anthropic
+# providers (Groq/OpenAI-compatible) -- see https://github.com/crewAIInc/crewAI/issues/5886
+crewai==0.130.0
+crewai-tools==0.42.0
+litellm
+groq
