@@ -5,8 +5,7 @@ requirement/acceptance-criteria/test-case sheets into a Neo4j graph, enriches it
 links, and exposes it through a Streamlit chat interface backed by **two switchable LLM
 pipelines** — HuggingFace and CrewAI + Groq.
 
-Originally built during a 5-week internship; restarted and fully revived as a solo project a
-year later, including a from-scratch environment rebuild and several pipeline fixes (see
+This project was initially developed as a prototype and later revived and further developed as a personal project, including a from-scratch environment rebuild and several pipeline fixes (see
 "Known Issues & Fixes" below).
 
 ## Project Goals
@@ -92,10 +91,10 @@ ui/
   home_ui.py, task1_ui.py, task2_ui.py, task4_ui.py
 config/
   settings.py              # central config (.env-backed)
-task_runners.py             # task1/task2/task4 entry points (kept separate from main.py
+
                              # to avoid a circular import with ui/task1_ui.py)
+
 main.py                      # CLI entrypoint + Streamlit app shell
-docs/                         # raw Markdown documentation
 test_cases/                   # raw Excel requirement/AC/test-case sheets
 temp_data/                    # generated intermediate JSON (gitignored)
 ```
@@ -117,9 +116,8 @@ temp_data/                    # generated intermediate JSON (gitignored)
   `crewai-tools==0.42.0` to avoid it.
 - **Circular import** existed between `main.py` and `ui/task1_ui.py` (each imported from the
   other). Resolved by extracting `run_task_1`/`run_task_2`/`run_task_4_cli` into a separate
-  `task_runners.py` module that both files import from independently.
 
-## Roadmap / Possible Next Steps
+  ## Roadmap / Possible Next Steps
 - Improve NER/entity extraction so `RELATED_TO` semantic links actually get created.
 - Backfill `content` for `Requirement`/`AcceptanceCriteria` nodes for richer embeddings.
 - Add prompt/context capture for the CrewAI backend in the UI (currently only implemented

@@ -198,3 +198,7 @@ temp_data/
 docs/
 .vscode/
 
+# Local / temporary files
+test_cases/
+tempCodeRunnerFile.py
+test.py
