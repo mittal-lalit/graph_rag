@@ -65,7 +65,7 @@ def render():
 
     backend = st.radio(
         "Choose answer engine",
-        options=["HuggingFace (GraphRAG)", "CrewAI + Groq"],
+        options=["GraphRAG + Groq", "CrewAI + Groq"],
         horizontal=True,
         key="backend_choice",
     )
@@ -86,7 +86,7 @@ def render():
 
     if user_query:
         with st.spinner(f"Thinking using {backend}…"):
-            if backend == "HuggingFace (GraphRAG)":
+            if backend == "GraphRAG + Groq":
                 assistant_answer, prompt_json = ask_hf(user_query)
             else:
                 assistant_answer, prompt_json = ask_crewai_backend(user_query)

@@ -10,7 +10,7 @@ main_path = str(pathlib.Path(__file__).resolve().parents[1])
 if main_path not in sys.path:
     sys.path.append(main_path)
  
-from main import run_task_1
+from common.directory_parser import DirectoryParser
  
 TEMP_DATA_DIR = "temp_data"
 DOCS_DIR = "docs"
@@ -57,7 +57,7 @@ def render():
     if st.button(" Parse Documents "):
         with st.spinner("Parsing Markdown files..."):
             try:
-                run_task_1()
+                DirectoryParser().parse()
                 st.success(" JSONs created in `/temp_data`.")
             except Exception as e:
                 st.error(f"Error: {e}")

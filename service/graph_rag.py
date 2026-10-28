@@ -2,7 +2,10 @@ import os
 import json
 from typing import List, Dict
 
-from huggingface_hub import InferenceClient
+from groq import Groq
+from dotenv import load_dotenv
+
+load_dotenv()
 from config.settings import (
     NEO4J_URI,
     NEO4J_USERNAME,
@@ -34,7 +37,7 @@ class GraphRAG:
             data_directory=None,
             text_processor=self.text_processor,
         )
-        self.llm_client = InferenceClient(provider="auto", api_key=self.hf_token)
+        self.llm_client = Groq(api_key=os.getenv("GROQ_API_KEY"))
 
         self.llm_model_name = QA_MODEL
         self.model_template = self.load_model_template(self.llm_model_name)
@@ -121,7 +124,10 @@ class GraphRAG:
             self.llm_model_name, user_query, context_text
         )
         response = self.llm_client.chat.completions.create(
-            model=self.llm_model_name, messages=messages
+            model="openai/gpt-oss-120b",
+            messages=messages,
+            temperature=0.2,
+            max_tokens=1500,
         )
         answer_text = response.choices[0].message.content.strip()
         print("\nAnswer:", answer_text)

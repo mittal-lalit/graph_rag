@@ -19,8 +19,9 @@ groq_api_key = os.getenv("GROQ_API_KEY")
 # 1. Groq LLM setup
 # =========================
 groq_LLM = LLM(
-    model="groq/qwen/qwen3-32b",
+    model="groq/openai/gpt-oss-120b",
     api_key=groq_api_key,
+    tool_choice="auto",
 )
 
 # =========================
